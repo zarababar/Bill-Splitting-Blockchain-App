@@ -1,0 +1,49 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Hardhat-specific folders
+artifacts/
+cache/
+coverage/
+typechain/
+coverage.json
+*.tsbuildinfo
+
+# Truffle-specific folders
+build/
+migrations/
+
+# Ganache files
+*.log
+*.pid
+chaindata/
+dapp/
+database/
+
+# Remix IDE
+remixd/
+
+# Hardhat or Truffle secret files
+.env
+.env.local
+.env.*.local
+
+# Binaries
+*.sol.js
+*.json
+
+# Compiled contract ABIs and bytecode (usually auto-generated)
+*.abi
+*.bin
+
+# Ignore MetaMask log files
+*.log
+
+# Ignore vscode settings folder
+.vscode/
+
+# Ignore OS system files
+.DS_Store
+Thumbs.db
