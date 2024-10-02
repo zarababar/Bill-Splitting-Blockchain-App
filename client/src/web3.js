@@ -48,7 +48,7 @@ const contractABI = [
 
 
 // Replace with your deployed contract address
-const contractAddress = '0x8C008659b480490d878A7dA0De5453265da3264C';
+const contractAddress = '0x54B44d078B2AF5C22Cbc419cC13eF64D6aB4827E';
 
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 

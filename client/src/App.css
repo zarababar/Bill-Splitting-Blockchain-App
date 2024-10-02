@@ -1,6 +1,6 @@
 /* src/App.css */
 .container {
-  max-width: 600px;
+  max-width: 900px;
   margin: auto;
   padding: 20px;
   border: 1px solid #ccc;
@@ -48,4 +48,119 @@ button:hover {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
+}
+
+/* src/App.css (Add this section) */
+.participant-selection {
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  /* Light border for distinction */
+  border-radius: 8px;
+  /* Rounded corners */
+  padding: 15px;
+  /* Inner spacing */
+  background-color: #f9f9f9;
+  /* Light background color */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow */
+}
+
+.participant-selection h2 {
+  text-align: center;
+  /* Centered heading */
+  color: #444;
+  /* Darker color for visibility */
+}
+
+.participant-selection ul {
+  list-style-type: none;
+  /* Remove default list styles */
+  padding: 0;
+  /* Remove default padding */
+}
+
+.participant-selection li {
+  display: flex;
+  /* Flexbox for alignment */
+  align-items: left;
+  /* Center items vertically */
+  padding: 10px;
+  /* Inner spacing for list items */
+  border-bottom: 1px solid #ddd;
+  /* Divider between participants */
+}
+
+.participant-selection li:last-child {
+  border-bottom: none;
+  /* Remove divider for last item */
+}
+
+.participant-selection label {
+  display: flex;
+  /* Use flexbox to align checkbox and text */
+  align-items: left;
+  /* Center items vertically */
+  flex-grow: 1;
+  /* Allow label to take full width */
+  cursor: pointer;
+  /* Indicate that label is clickable */
+}
+
+.participant-selection input[type="checkbox"] {
+  margin-right: 10px;
+  /* Space between checkbox and label */
+  transform: scale(1.2);
+  /* Slightly enlarge checkbox */
+  cursor: pointer;
+  /* Change cursor on hover */
+}
+
+.participant-selection .friend-info {
+  display: flex;
+  /* Flexbox for horizontal alignment */
+  flex-direction: row;
+  /* Row direction for horizontal layout */
+  justify-content: space-between;
+  /* Space between name and wallet address */
+  flex-grow: 1;
+  /* Allow it to take full width */
+}
+
+.participant-selection .friend-info .name {
+  font-weight: bold;
+  /* Bold style for name */
+  color: #333;
+  /* Darker color for visibility */
+  margin-right: 10px;
+  /* Optional space to separate from wallet */
+}
+
+.participant-selection .friend-info .wallet {
+  color: #666;
+  /* Lighter color for wallet address */
+}
+
+/* Button styling */
+.participant-selection button {
+  margin-top: 15px;
+  /* Spacing above the button */
+  background-color: #28a745;
+  /* Green button color */
+  color: white;
+  /* Text color for the button */
+  border: none;
+  /* Remove default border */
+  border-radius: 4px;
+  /* Rounded corners for the button */
+  padding: 10px;
+  /* Inner padding for button */
+  cursor: pointer;
+  /* Change cursor on hover */
+  width: 100%;
+  /* Full width for button */
+}
+
+.participant-selection button:hover {
+  background-color: #218838;
+  /* Darker green on hover */
 }
