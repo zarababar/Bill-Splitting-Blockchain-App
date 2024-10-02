@@ -172,14 +172,15 @@
 // export default BillSplitter;
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { web3, contract } from './web3';
 import './BillSplitter.css';
 
 const BillSplitter = () => {
-    const [bills, setBills] = useState([]); // Store multiple bills
+    const [bills, setBills] = useState([]);
     const [totalAmount, setTotalAmount] = useState('');
-    const [friends, setFriends] = useState([]); // Store friends' data
-    const [selectedFriends, setSelectedFriends] = useState([]); // Store selected friends
+    const [friends, setFriends] = useState([]);
+    const [selectedFriends, setSelectedFriends] = useState([]);
     const [account, setAccount] = useState('');
 
     useEffect(() => {
@@ -194,21 +195,9 @@ const BillSplitter = () => {
         };
 
         loadAccount();
-
-        // Fetch friends from the backend
-        const fetchFriends = async () => {
-            try {
-                const response = await fetch('http://localhost:5000/api/friends');
-                const data = await response.json();
-                setFriends(data); // Update friends state with fetched data
-            } catch (error) {
-                console.error('Error fetching friends:', error);
-            }
-        };
-
         fetchFriends();
+        fetchBills();
 
-        // Handle account changes
         window.ethereum.on('accountsChanged', (accounts) => {
             setAccount(accounts[0]);
         });
@@ -220,28 +209,30 @@ const BillSplitter = () => {
         };
     }, []);
 
-    useEffect(() => {
-        const fetchBills = async () => {
-            try {
-                const response = await fetch('http://localhost:5000/api/bills');
-                const fetchedBills = await response.json();
+    const fetchFriends = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/friends');
+            setFriends(response.data);
+        } catch (error) {
+            console.error('Error fetching friends:', error);
+        }
+    };
 
-                // Ensure each bill has an array for selectedFriends
-                const billsWithDefaults = fetchedBills.map(bill => ({
-                    ...bill,
-                    selectedFriends: bill.selectedFriends || [] // Ensure it's an array
-                }));
-
-                setBills(billsWithDefaults); // Update the state with fetched bills
-            } catch (error) {
-                console.error('Error fetching bills:', error);
-            }
-        };
-
-        fetchBills();
-    }, []);
+    const fetchBills = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/bills');
+            setBills(response.data);
+        } catch (error) {
+            console.error('Error fetching bills:', error);
+        }
+    };
 
     const handleAddBill = async () => {
+        if (!totalAmount || isNaN(totalAmount) || parseFloat(totalAmount) <= 0) {
+            alert('Please enter a valid total amount.');
+            return;
+        }
+
         const validParticipants = selectedFriends.map(friend => friend.walletAddress).filter(address => web3.utils.isAddress(address));
 
         if (validParticipants.length === 0) {
@@ -249,7 +240,6 @@ const BillSplitter = () => {
             return;
         }
 
-        // Split the bill
         try {
             await contract.methods.splitBill(web3.utils.toWei(totalAmount, 'ether'), validParticipants)
                 .send({ from: account, gas: 3000000 });
@@ -257,24 +247,13 @@ const BillSplitter = () => {
             // Fetch share status after splitting the bill
             const shareStatus = await fetchShareStatus(validParticipants);
 
-            // Create the new bill object
             const newBill = {
                 totalAmount,
                 selectedFriends,
                 shareStatus,
-                _id: Date.now() // Added _id for uniqueness
             };
 
-            // Save the new bill to the database
-            await fetch('http://localhost:5000/api/bills', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newBill)
-            });
-
-            // Update state with the new bill
+            await axios.post('http://localhost:5000/api/bills', newBill);
             setBills(prevBills => [...prevBills, newBill]);
 
             // Reset state for the next bill
@@ -291,14 +270,14 @@ const BillSplitter = () => {
         for (const participant of validParticipants) {
             const paid = await contract.methods.hasPaid(participant).call();
             const share = await contract.methods.shares(participant).call();
-            status[participant] = { paid, share: web3.utils.fromWei(share, 'ether') }; // Convert share from wei to ETH for display
+            status[participant] = { paid, share: web3.utils.fromWei(share, 'ether') };
         }
-        return status; // Return the fetched share status
+        return status;
     };
 
     const handlePayShare = async (participant, billId) => {
-        const bill = bills.find(bill => bill._id === billId); // Find the bill by ID
-        const share = bill.shareStatus[participant]?.share; // Get the share amount for the participant
+        const bill = bills.find(bill => bill._id === billId);
+        const share = bill.shareStatus[participant]?.share;
 
         if (!share || parseFloat(share) <= 0) {
             alert('You do not owe anything or you have already paid.');
@@ -306,39 +285,46 @@ const BillSplitter = () => {
         }
 
         try {
-            // Proceed with the transaction using the authorized account
             await contract.methods.payShare(billId).send({
                 from: account,
                 value: web3.utils.toWei(share, 'ether'),
             });
 
-            // Update the share status for the participant who paid
             const updatedShareStatus = { ...bill.shareStatus };
-            updatedShareStatus[participant].paid = true; // Mark as paid
+            updatedShareStatus[participant].paid = true;
 
-            // Create a new bill object with the updated share status
             const updatedBill = {
                 ...bill,
                 shareStatus: updatedShareStatus,
             };
 
-            // Update the state without fetching all bills again
-            setBills(prevBills => {
-                return prevBills.map(b => (b._id === billId ? updatedBill : b));
+            setBills(prevBills => prevBills.map(b => (b._id === billId ? updatedBill : b)));
+            console.log(".....bill", bills)
+            console.log("Type of billId:", typeof billId);
+            console.log("billId", billId)
+            const response = await axios.put(`http://localhost:5000/api/bills/${billId}/participants`, {
+                participant,
+                paid: true
             });
+            // Update state with the new bill data from response
+            // setBills(prevBills => prevBills.map(b => (b._id === billId ? response.data : b)));
+
 
         } catch (error) {
             console.error('Error paying share:', error);
             alert('Payment failed. Please check the console for more details.');
         }
     };
-    // Toggle selected friends
+
     const toggleFriendSelection = (friend) => {
         setSelectedFriends((prevSelected) => {
-            if (prevSelected.includes(friend)) {
-                return prevSelected.filter((selectedFriend) => selectedFriend !== friend);
+            const selectedSet = new Set(prevSelected.map(f => f.walletAddress));
+            if (selectedSet.has(friend.walletAddress)) {
+                selectedSet.delete(friend.walletAddress);
+            } else {
+                selectedSet.add(friend.walletAddress);
             }
-            return [...prevSelected, friend];
+            return [...selectedSet].map(address => friends.find(f => f.walletAddress === address));
         });
     };
 
@@ -378,26 +364,25 @@ const BillSplitter = () => {
             <div className="status">
                 <h2>Share Status</h2>
                 {bills.length === 0 ? (
-                    <p>No bills added yet.</p> // Message for empty bills array
+                    <p>No bills added yet.</p>
                 ) : (
                     bills.map((bill, billIndex) => (
                         <div key={billIndex} className="bill">
                             <h3>Bill {billIndex + 1} - Total: {bill.totalAmount} ETH</h3>
                             <ul>
-                                {bill.selectedFriends && bill.selectedFriends.length > 0 ? (
+                                {bill.selectedFriends.length > 0 ? (
                                     bill.selectedFriends.map(friend => (
                                         <li key={friend.walletAddress}>
                                             {friend.name} ({friend.walletAddress}): {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH -
                                             {bill.shareStatus[friend.walletAddress]?.paid ? ' Paid' : ' Unpaid'}
                                             {!bill.shareStatus[friend.walletAddress]?.paid && (
-                                                <button onClick={() => handlePayShare(friend.walletAddress, bill._id)}>Pay</button> // Pass bill._id here
+                                                <button onClick={() => handlePayShare(friend.walletAddress, bill._id)}>Pay</button>
                                             )}
                                         </li>
                                     ))
                                 ) : (
                                     <p>No participants for this bill.</p>
                                 )}
-
                             </ul>
                         </div>
                     ))

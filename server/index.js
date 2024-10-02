@@ -86,6 +86,7 @@ app.post('/api/friends', async (req, res) => {
 // Route to create a new bill
 
 
+
 // Route to get all bills
 app.get('/api/bills', async (req, res) => {
     try {
@@ -95,36 +96,71 @@ app.get('/api/bills', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch bills' });
     }
 });
+// Route to create a new bill
 app.post('/api/bills', async (req, res) => {
-    const { totalAmount, selectedFriends } = req.body;
+    const { totalAmount, selectedFriends, shareStatus } = req.body;
 
     // Validate input
     if (!totalAmount || !selectedFriends || selectedFriends.length === 0) {
-        return res.status(400).send('Invalid bill data');
+        return res.status(400).json({ error: 'Invalid bill data' });
     }
 
     try {
-        // Create a new bill document
         const newBill = new Bill({
             totalAmount,
             selectedFriends,
-            shareStatus, // Include the share status as well
-
-            // You can also include additional fields if needed
+            shareStatus: shareStatus || {} // Optional shareStatus
         });
 
-        // Save the bill to the database
         await newBill.save();
-        res.status(201).json(newBill); // Respond with the created bill
+        res.status(201).json(newBill);
     } catch (error) {
-        console.error('Error saving bill:', error);
-        res.status(500).send('Error saving bill');
+        console.error('Error creating bill:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// Assuming you're using Express and have a Bill model
+app.put('/api/bills/:billId/participants', async (req, res) => {
+    const { billId } = req.params;
+    const { participant, paid } = req.body;
+
+    console.log("destructure.............", billId, participant, paid);
+
+    try {
+        // Find the bill by ID
+        const bill = await Bill.findById(billId);
+        console.log("bill.............", bill);
+
+        if (!bill) {
+            return res.status(404).send('Bill not found');
+        }
+
+        // Check if the participant exists in the shareStatus map
+        const participantStatus = bill.shareStatus.get(participant);
+
+        if (participantStatus) {
+            // Update the participant's paid status
+            participantStatus.paid = paid;
+
+            // Set the updated participant status back to the Map
+            bill.shareStatus.set(participant, participantStatus);
+
+            // Save the updated bill
+            await bill.save();
+
+            res.status(200).send('Participant paid status updated successfully');
+        } else {
+            return res.status(404).send('Participant not found');
+        }
+
+    } catch (error) {
+        console.error('Error updating participant status:', error);
+        res.status(500).send('Server error');
     }
 });
 // Route to update a participant's payment status
 app.patch('/api/bills/:billId/participants/:walletAddress', async (req, res) => {
     const { billId, walletAddress } = req.params;
-
     try {
         const bill = await Bill.findById(billId);
         if (!bill) {
