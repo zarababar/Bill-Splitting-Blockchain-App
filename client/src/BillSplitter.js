@@ -373,11 +373,29 @@ const BillSplitter = () => {
                                 {bill.selectedFriends.length > 0 ? (
                                     bill.selectedFriends.map(friend => (
                                         <li key={friend.walletAddress}>
-                                            {friend.name} ({friend.walletAddress}): {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH -
-                                            {bill.shareStatus[friend.walletAddress]?.paid ? ' Paid' : ' Unpaid'}
+                                            {friend.name} ({friend.walletAddress}):
+                                            {/* {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH -
+                                            {bill.shareStatus[friend.walletAddress]?.paid ? <span className="status-paid">Paid</span> : <span className="status-unpaid">Unpaid</span>}
                                             {!bill.shareStatus[friend.walletAddress]?.paid && (
+
                                                 <button onClick={() => handlePayShare(friend.walletAddress, bill._id)}>Pay</button>
+                                            )} */}
+                                            {bill.shareStatus[friend.walletAddress]?.share ? (
+                                                <span className="share-amount">
+                                                    {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH
+                                                </span>
+                                            ) : (
+                                                <span className="share-amount">0 ETH</span>
                                             )}
+                                            {bill.shareStatus[friend.walletAddress]?.paid ? (
+                                                <span className="status-paid">Paid</span>
+                                            ) : (
+                                                <>
+                                                    <span className="status-unpaid">Unpaid</span>
+                                                    <button onClick={() => handlePayShare(friend.walletAddress, bill._id)}>Pay</button>
+                                                </>
+                                            )}
+
                                         </li>
                                     ))
                                 ) : (
