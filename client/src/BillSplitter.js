@@ -113,6 +113,7 @@ const BillSplitter = () => {
         }
 
         try {
+
             await contract.methods.payShare(billId).send({
                 from: account,
                 value: web3.utils.toWei(share, 'ether'),
@@ -134,6 +135,18 @@ const BillSplitter = () => {
                 participant,
                 paid: true
             });
+            // Check if all participants have paid
+            const allPaid = Object.values(updatedShareStatus).every(status => status.paid);
+
+            // If all participants paid, remove the bill from UI and DB
+            if (allPaid) {
+                // Remove from UI
+                setBills(prevBills => prevBills.filter(b => b._id !== billId));
+
+                // Remove from DB
+                await axios.delete(`http://localhost:5000/api/bills/${billId}`);
+            }
+            // window.location.reload();
             // Update state with the new bill data from response
             // setBills(prevBills => prevBills.map(b => (b._id === billId ? response.data : b)));
 
@@ -202,12 +215,6 @@ const BillSplitter = () => {
                                     bill.selectedFriends.map(friend => (
                                         <li key={friend.walletAddress}>
                                             {friend.name} ({friend.walletAddress}):
-                                            {/* {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH -
-                                            {bill.shareStatus[friend.walletAddress]?.paid ? <span className="status-paid">Paid</span> : <span className="status-unpaid">Unpaid</span>}
-                                            {!bill.shareStatus[friend.walletAddress]?.paid && (
-
-                                                <button onClick={() => handlePayShare(friend.walletAddress, bill._id)}>Pay</button>
-                                            )} */}
                                             {bill.shareStatus[friend.walletAddress]?.share ? (
                                                 <span className="share-amount">
                                                     {bill.shareStatus[friend.walletAddress]?.share || '0'} ETH

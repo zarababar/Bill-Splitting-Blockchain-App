@@ -1,49 +1,3 @@
-// // index.js
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const cors = require('cors');
-// const Friend = require('./models/Friend'); // Import the Friend model
-
-// const app = express();
-// app.use(cors());
-// app.use(express.json());
-
-// mongoose.connect('mongodb://localhost:27017/blockchain-app', {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true
-// })
-//     .then(() => console.log('MongoDB connected'))
-//     .catch(err => console.error('MongoDB connection error:', err));
-
-// // Simple route to check server status
-// app.get('/', (req, res) => {
-//     res.send('Backend is running!');
-// });
-
-// // Route to get the list of friends
-// app.get('/api/friends', async (req, res) => {
-//     try {
-//         const friends = await Friend.find();
-//         res.json(friends);
-//     } catch (error) {
-//         res.status(500).json({ error: 'Failed to fetch friends' });
-//     }
-// });
-
-// // Route to add a new friend
-// app.post('/api/friends', async (req, res) => {
-//     const { name, walletAddress } = req.body;
-//     try {
-//         const newFriend = new Friend({ name, walletAddress });
-//         await newFriend.save();
-//         res.status(201).json(newFriend);
-//     } catch (error) {
-//         res.status(500).json({ error: 'Failed to add friend' });
-//     }
-// });
-
-// const PORT = 5000;
-// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -181,6 +135,17 @@ app.patch('/api/bills/:billId/participants/:walletAddress', async (req, res) => 
         res.status(500).json({ error: 'Failed to update payment status' });
     }
 });
+// In your backend (e.g., Express.js)
+app.delete('/api/bills/:billId', async (req, res) => {
+    try {
+        const { billId } = req.params;
+        await Bill.findByIdAndDelete(billId);
+        res.status(200).send({ message: 'Bill deleted successfully' });
+    } catch (error) {
+        res.status(500).send({ error: 'Failed to delete the bill' });
+    }
+});
+
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
